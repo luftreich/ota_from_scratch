@@ -67,13 +67,28 @@ cd $src_dir || exit
 mkdir -p META-INF/com/google/android 
 mkdir -p system/app
 mkdir -p data/app
+touch logo.img
 
-sys_apk_file='/system/app/sys_sample.apk'
-data_apk_file='/data/app/data_sample.apk'
-cpuz_apk_file='/data/app/com.cpuid.cpu_z.apk'
-touch logo.img ${sys_apk_file#/} ${data_apk_file#/}
+apk_info=/tmp/.ota_apk_info
+del_info=/tmp/.ota_apk_del
+perm_info=/tmp/.ota_apk_perm
+> $apk_info
+for _apk in system/app/*.apk; do
+    cat >> $apk_info << _EOS
+delete("/$_apk"); set_perm(0,0,0644,"/$_apk");
+_EOS
+done
+for _apk in data/app/*.apk; do
+    cat >> $apk_info << _EOD
+delete("/$_apk"); set_perm(1000,1000,0644,"/$_apk");
+_EOD
+done
+cat $apk_info | awk '{print $1}' > $del_info
+cat $apk_info | awk '{print $2}' > $perm_info
 
-cat > META-INF/com/google/android/updater-script << _EOF
+update_script='META-INF/com/google/android/updater-script'
+
+cat > $update_script  << _EOF
 
 ui_print("Created by Luftreich@imaxpo.com");
 
@@ -86,18 +101,22 @@ ui_print("Mounting /data...");
 mount("ext4", "EMMC", "/dev/block/data", "/data");
 
 ui_print("- Removing old files");
-delete("$sys_apk_file");
-delete("$data_apk_file");
-delete("$cpuz_apk_file");
+_EOF
+
+cat $del_info >> $update_script
+
+cat >> $update_script  << _EOF
 
 ui_print("Extracting system and data...");
 package_extract_dir("system", "/system");
 package_extract_dir("data", "/data");
 
 ui_print("Fixing permissions...");
-set_perm(0, 0, 0644, "$sys_apk_file");
-set_perm(1000, 1000, 0644, "$data_apk_file");
-set_perm(1000, 1000, 0644, "$cpuz_apk_file");
+_EOF
+
+cat $perm_info >> $update_script
+
+cat >> $update_script  << _EOF
 
 ui_print("Unmounting /system /data...");
 unmount("/system");
@@ -126,7 +145,7 @@ key_b='build/target/product/security/testkey.pk8'
 
 unset _JAVA_OPTIONS
 java -Xmx2048m -jar $sign_apk  -w $key_a  $key_b $orig_pkg $sign_pkg || exit
-ls $sign_pkg || exit
+ls $sign_pkg >/dev/null || exit
 
 
     cat > $param_file << _EOF
@@ -214,6 +233,7 @@ sync
 tree $ota_dir
 # cat $xml_file
 echo "All is OK ! <DEMO> $form_page"
+echo "Sign OTA PKG: ${sign_pkg##*scratch/}"
 
 exit $?
 

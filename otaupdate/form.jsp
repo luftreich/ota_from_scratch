@@ -19,7 +19,7 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
 		mac:<input name="mac" type="text" value="172.17.72.254"/><br>
 		firmware:<input name="firmware" type="text" value="00442023"/><br>
 		android:<input name="android" type="text" value="4.4.2"/><br>
-		time:<input name="time" type="text" value="Fri 20 Mar 2015 05:20:55 PM HKT"/><br>
+		time:<input name="time" type="text" value="Mon 23 Mar 2015 11:54:17 AM HKT"/><br>
 		builder:<input name="builder" type="text" value="LT"/><br>
 		fingerprint:<input name="fingerprint" type="text" value="MBX/m201/m201:4.4.2/KOT49H/20150318.V0823:user/test-keys"/><br>
 		debug_conf:<input name="debug_conf" type="text" value="http://192.168.1.20:8080/otaupdate/debug.conf"/><br>
